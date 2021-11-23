@@ -1,0 +1,36 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  EXCEPTION_STACK_OVERFLOW (0xc00000fd) at pc=0x000007fef0be8f23, pid=4004, tid=2432
+#
+# JRE version: OpenJDK Runtime Environment AdoptOpenJDK (11.0.10+9) (build 11.0.10+9)
+# Java VM: OpenJDK 64-Bit Client VM AdoptOpenJDK (11.0.10+9, mixed mode, g1 gc, windows-amd64)
+# Problematic frame:
+# V  [jvm.dll+0x1e8f23]
+#
+# No core dump will be written. Minidumps are not enabled by default on client versions of Windows
+#
+# If you would like to submit a bug report, please visit:
+#   https://github.com/AdoptOpenJDK/openjdk-support/issues
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -Dosgi.requiredJavaVersion=1.8 -Dosgi.instance.area.default=@user.home/STM32CubeIDE/workspace_1.7.0 -Declipse.buildId=Version 1.7.0 -DproductMaturityGrade=mm -XX:+UseG1GC -XX:+UseStringDeduplication -Xms256m -Xmx1024m -Djavax.net.ssl.trustStoreType=WINDOWS-ROOT 
+
+Host: AMD Phenom(tm) II N830 Triple-Core Processor, 3 cores, 2G,  Windows 7 , 64 bit Build 7601 (6.1.7601.25682)
+Time: Mon Nov 22 02:26:10 2021 RTZ 6 (ceia) elapsed time: 17631.759131 seconds (0d 4h 53m 51s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00000000733ba800):  JavaThread "Text Viewer Hover Presenter" daemon [_thread_in_vm, id=2432, stack(0x0000000072800000,0x0000000072900000)]
+
+Stack: [0x0000000072800000,0x0000000072900000],  sp=0x00000000728fef70,  free space=1019k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [jvm.dll+0x1e8f23]
+V  [jvm.dll+0x367272]
+V  [jvm.dll+0x1e989a]
+V  [jvm.dll+0x1e9afb]
+V  [jvm.dll+0x256a91]
+V  [jvm.dll+0x462819]
+V  [jvm.dll+0x45ba84]
