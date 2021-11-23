@@ -110,6 +110,11 @@ osMessageQueueId_t Print_QueueHandle;
 const osMessageQueueAttr_t Print_Queue_attributes = {
   .name = "Print_Queue"
 };
+/* Definitions for SphQueue_Get_UART */
+osMessageQueueId_t SphQueue_Get_UARTHandle;
+const osMessageQueueAttr_t SphQueue_Get_UART_attributes = {
+  .name = "SphQueue_Get_UART"
+};
 /* Definitions for Guardian_UART */
 osMutexId_t Guardian_UARTHandle;
 const osMutexAttr_t Guardian_UART_attributes = {
@@ -141,9 +146,15 @@ void SetUART(void *argument);
 void GetUART(void *argument);
 
 /* USER CODE BEGIN PFP */
-void Get_Btn_Task(void){
+void Get_Btn_Task(void)
+{
 	xSemaphoreGiveFromISR(Sph_Get_BtnHandle, NULL);
 	xSemaphoreGiveFromISR(Sph_Set_LedHandle, NULL);
+}
+
+void Activate_Get_UART(void)
+{
+	xSemaphoreGiveFromISR(Get_UARTHandle, NULL);
 }
 /* USER CODE END PFP */
 
@@ -218,6 +229,9 @@ int main(void)
 
   /* creation of Print_Queue */
   Print_QueueHandle = osMessageQueueNew (4, sizeof(Symbol_TypeDef), &Print_Queue_attributes);
+
+  /* creation of SphQueue_Get_UART */
+  SphQueue_Get_UARTHandle = osMessageQueueNew (4, sizeof(uint8_t), &SphQueue_Get_UART_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -626,27 +640,34 @@ void SetUART(void *argument)
 /* USER CODE END Header_GetUART */
 void GetUART(void *argument)
 {
-	/* USER CODE BEGIN GetUART */
+  /* USER CODE BEGIN GetUART */
 	uint8_t	*Sumbol_Bits[6];
 	/* Infinite loop */
-	xSemaphoreTake(Guardian_UARTHandle, portMAX_DELAY);
+
+	/*	Очистка листа семофоров - неправельная конфигурация CMSIS V2 */
+/*	xSemaphoreTake(Get_UARTHandle, portMAX_DELAY);
+	xSemaphoreTake(Get_UARTHandle, portMAX_DELAY);
+	xSemaphoreTake(Get_UARTHandle, portMAX_DELAY);
+	xSemaphoreTake(Get_UARTHandle, portMAX_DELAY);
+
 	for(;;)
 	{
 		ActivTaskNumbe	=	4;
+		xSemaphoreTake(Get_UARTHandle, portMAX_DELAY);
 		xSemaphoreTake(Guardian_UARTHandle, portMAX_DELAY);
-		HAL_USART_Receive_IT(&husart2, Sumbol_Bits, 6);
+		HAL_USART_Receive_IT(&husart2, *Sumbol_Bits, 6);
 
 		/*	Ожидание завершения приёма	*/
-		while(HAL_USART_GetState(&husart2) == HAL_USART_STATE_BUSY_RX )
+/*		while(HAL_USART_GetState(&husart2) == HAL_USART_STATE_BUSY_RX )
 		{
 		}
 
 		xSemaphoreGive(Guardian_UARTHandle);
 
 		/*	Динамическая индикация, на основе принятых данных	*/
-		for (uint8_t	Number_Bits = 0; Number_Bits < 7; Number_Bits ++)
+/*		for (uint8_t	Number_Bits = 0; Number_Bits < 7; Number_Bits ++)
 		{
-			if (Sumbol_Bits[Number_Bits] - Offset == Point)
+			if ( (Sumbol_Bits[Number_Bits] - Offset) == Point)
 			{
 				HAL_GPIO_WritePin( LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET );
 				osDelay(TIME_DELAY_SPH);
@@ -660,8 +681,8 @@ void GetUART(void *argument)
 			}
 		}
 
-	}
-	/* USER CODE END GetUART */
+	}*/
+  /* USER CODE END GetUART */
 }
 
 /**

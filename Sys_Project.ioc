@@ -1,9 +1,10 @@
 #MicroXplorer Configuration settings - do not modify
 FREERTOS.CountingSemaphores01=Sph_Get_Btn,4,Dynamic,NULL;Sph_Set_Led,4,Dynamic,NULL
+FREERTOS.FootprintOK=true
 FREERTOS.INCLUDE_vTaskDelete=0
-FREERTOS.IPParameters=Tasks01,configUSE_IDLE_HOOK,Queues01,configUSE_NEWLIB_REENTRANT,configTOTAL_HEAP_SIZE,configUSE_COUNTING_SEMAPHORES,CountingSemaphores01,INCLUDE_vTaskDelete,configTICK_RATE_HZ,Mutexes01
+FREERTOS.IPParameters=Tasks01,configUSE_IDLE_HOOK,Queues01,configUSE_NEWLIB_REENTRANT,configTOTAL_HEAP_SIZE,configUSE_COUNTING_SEMAPHORES,CountingSemaphores01,INCLUDE_vTaskDelete,configTICK_RATE_HZ,Mutexes01,FootprintOK
 FREERTOS.Mutexes01=Guardian_UART,Dynamic,NULL
-FREERTOS.Queues01=Scan_Queue,4,Symbol_TypeDef,0,Dynamic,NULL,NULL;Print_Queue,4,Symbol_TypeDef,0,Dynamic,NULL,NULL
+FREERTOS.Queues01=Scan_Queue,4,Symbol_TypeDef,0,Dynamic,NULL,NULL;Print_Queue,4,Symbol_TypeDef,0,Dynamic,NULL,NULL;SphQueue_Get_UART,4,uint8_t,0,Dynamic,NULL,NULL
 FREERTOS.Tasks01=Event_Func,24,128,HandlerBtnClick,Default,NULL,Dynamic,NULL,NULL;Set_Led,24,128,LedBlinkTask,Default,NULL,Dynamic,NULL,NULL;Set_UART,24,128,SetUART,Default,NULL,Dynamic,NULL,NULL;Get_UART,24,128,GetUART,Default,NULL,Dynamic,NULL,NULL
 FREERTOS.configTICK_RATE_HZ=1000
 FREERTOS.configTOTAL_HEAP_SIZE=3500

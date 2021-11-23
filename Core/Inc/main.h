@@ -17,6 +17,14 @@
   *
   ******************************************************************************
   */
+
+#ifndef __MAIN_H_PRIVATE
+#define __MAIN_H_PRIVATE
+
+void Activate_Get_UART(void);
+
+#endif
+
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -32,7 +40,6 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -42,7 +49,6 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -55,6 +61,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 void Get_Btn_Task(void);
+
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
