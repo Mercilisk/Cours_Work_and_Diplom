@@ -154,7 +154,8 @@ void Get_Btn_Task(void)
 
 void Activate_Get_UART(void)
 {
-	xSemaphoreGiveFromISR(Sph_Get_UARTHandle, NULL);
+	//xSemaphoreGiveFromISR(Sph_Get_UARTHandle, NULL);
+	xSemaphoreTakeFromISR(Guardian_UARTHandle, NULL);
 }
 /* USER CODE END PFP */
 
@@ -328,7 +329,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 38400;
+  huart2.Init.BaudRate = 115200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -398,7 +399,7 @@ void HandlerBtnClick(void *argument)
   /* USER CODE BEGIN 5 */
 		Symbol_TypeDef	*Symbol						=	(Symbol_TypeDef*)malloc(
 																 sizeof(Symbol_TypeDef));
-		Symbol -> Bit_Number						= 	FIRST_BIT;
+
 
 	/* Infinite loop */
 
@@ -411,18 +412,17 @@ void HandlerBtnClick(void *argument)
 	for(;;)
 	{
 		/*	Обнулить данные в битах, для более простой передачи через UART	*/
-		Symbol -> First_Bit			=	(uint8_t) 0;
-		Symbol -> Second_Bit		=	(uint8_t) 0;
-		Symbol -> Third_Bit			=	(uint8_t) 0;
-		Symbol -> Fourth_Bit		=	(uint8_t) 0;
-		Symbol -> Fifth_Bit			=	(uint8_t) 0;
-		Symbol -> Sixth_Bit			=	(uint8_t) 0;
+		Symbol -> First_Bit						=	(uint8_t) 0;
+		Symbol -> Second_Bit					=	(uint8_t) 0;
+		Symbol -> Third_Bit						=	(uint8_t) 0;
+		Symbol -> Fourth_Bit					=	(uint8_t) 0;
+		Symbol -> Fifth_Bit						=	(uint8_t) 0;
+		Symbol -> Sixth_Bit						=	(uint8_t) 0;
+		Symbol -> Bit_Number					= 	FIRST_BIT;
 
 		xSemaphoreTake(Sph_Get_BtnHandle, portMAX_DELAY);
 
 Point_Handling_Second_Bit:
-
-		ActivTaskNumbe	=	1;
 
 		/*	Детектирование нажатия как точки	*/
 		if (xSemaphoreTake(Sph_Get_BtnHandle, TIME_DELAY_SPH) == pdFALSE)
@@ -549,7 +549,7 @@ void LedBlinkTask(void *argument)
 	for(;;)
 	{
 		xSemaphoreTake(Sph_Set_LedHandle, portMAX_DELAY);
-		ActivTaskNumbe	=	2;
+
 			HAL_GPIO_WritePin( LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET );
 			osDelay(TIME_DELAY_SPH);
 			HAL_GPIO_WritePin( LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET );
@@ -569,11 +569,11 @@ void SetUART(void *argument)
   /* USER CODE BEGIN SetUART */
 	Symbol_TypeDef *Transmit_Symbol				=	(Symbol_TypeDef*)malloc(
 			 	 	 	 	 	 	 	 	 	 	 	 	 	 	 sizeof(Symbol_TypeDef));;
-	uint8_t	Sumbol_Bits[6] = {0, 0, 0, 0, 0, 0};
+	uint8_t	Sumbol_Bits[6] = {0};
 	/* Infinite loop */
 	for(;;)
 	{
-		ActivTaskNumbe	=	3;
+
 		xQueueReceive(Print_QueueHandle, Transmit_Symbol, portMAX_DELAY);
 		/*	Создание вектора типа uint8_t, состоящего из данных нажатия на кнопку
 		 * для передачи через UART
@@ -615,12 +615,11 @@ void SetUART(void *argument)
 				break;
 			}
 		}
-		Sumbol_Bits[END_BIT] 					=	0;
 		xSemaphoreTake(Guardian_UARTHandle, portMAX_DELAY);
 		HAL_UART_Transmit_IT(&huart2, Sumbol_Bits, 6);
 
 		/*	Ожидание завершения передачи	*/
-		while(HAL_UART_GetState(&huart2) == HAL_UART_STATE_BUSY_TX )
+		while(HAL_UART_GetState(&huart2) == HAL_UART_STATE_BUSY_TX_RX )
 		{
 		}
 
@@ -651,10 +650,11 @@ void GetUART(void *argument)
 
 	for(;;)
 	{
-		ActivTaskNumbe	=	4;
-		xSemaphoreTake(Sph_Get_UARTHandle, portMAX_DELAY);
-		xSemaphoreTake(Guardian_UARTHandle, portMAX_DELAY);
+
 		HAL_UART_Receive_IT(&huart2, Sumbol_Bits, 6);
+
+		//xSemaphoreTake(Sph_Get_UARTHandle, portMAX_DELAY);
+		//xSemaphoreTake(Guardian_UARTHandle, portMAX_DELAY);
 
 		/*	Ожидание завершения приёма	*/
 		while(HAL_UART_GetState(&huart2) == HAL_UART_STATE_BUSY_RX )
@@ -664,7 +664,7 @@ void GetUART(void *argument)
 		xSemaphoreGive(Guardian_UARTHandle);
 
 		/*	Динамическая индикация, на основе принятых данных	*/
-		for (uint8_t	Number_Bits = 0; Number_Bits < 7; Number_Bits ++)
+		for (uint8_t	Number_Bits = 0; Number_Bits < 6; Number_Bits ++)
 		{
 			if ( (Sumbol_Bits[Number_Bits] - Offset) == Point)
 			{
@@ -672,12 +672,13 @@ void GetUART(void *argument)
 				osDelay(TIME_DELAY_SPH);
 				HAL_GPIO_WritePin( LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET );
 			}
-			else
+			else if ( (Sumbol_Bits[Number_Bits] - Offset) == Dash)
 			{
 				HAL_GPIO_WritePin( LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET );
 				osDelay(2 * TIME_DELAY_SPH);
 				HAL_GPIO_WritePin( LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET );
 			}
+			osDelay(TIME_DELAY_SPH);
 		}
 
 	}
