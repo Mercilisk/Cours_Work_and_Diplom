@@ -58,7 +58,7 @@ typedef	enum{
 #define	SIXTH_BIT								( (uint8_t) 6)
 #define	END_BIT									( (uint8_t) 7)
 
-#define	TIME_DELAY_SPH 							( (TickType_t) (500 / portTICK_RATE_MS) )
+#define	TIME_DELAY_SPH 							( (TickType_t) (750 / portTICK_RATE_MS) )
 
 #define	Offset									( (uint8_t) 48)
 
@@ -70,7 +70,7 @@ typedef	enum{
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-USART_HandleTypeDef husart2;
+UART_HandleTypeDef huart2;
 
 /* Definitions for Event_Func */
 osThreadId_t Event_FuncHandle;
@@ -110,11 +110,6 @@ osMessageQueueId_t Print_QueueHandle;
 const osMessageQueueAttr_t Print_Queue_attributes = {
   .name = "Print_Queue"
 };
-/* Definitions for SphQueue_Get_UART */
-osMessageQueueId_t SphQueue_Get_UARTHandle;
-const osMessageQueueAttr_t SphQueue_Get_UART_attributes = {
-  .name = "SphQueue_Get_UART"
-};
 /* Definitions for Guardian_UART */
 osMutexId_t Guardian_UARTHandle;
 const osMutexAttr_t Guardian_UART_attributes = {
@@ -130,6 +125,11 @@ osSemaphoreId_t Sph_Set_LedHandle;
 const osSemaphoreAttr_t Sph_Set_Led_attributes = {
   .name = "Sph_Set_Led"
 };
+/* Definitions for Sph_Get_UART */
+osSemaphoreId_t Sph_Get_UARTHandle;
+const osSemaphoreAttr_t Sph_Get_UART_attributes = {
+  .name = "Sph_Get_UART"
+};
 /* USER CODE BEGIN PV */
 volatile uint32_t	ActivTaskNumbe			=	0;
 
@@ -139,7 +139,7 @@ uint8_t Number_Itaration					=	0u;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_Init(void);
+static void MX_USART2_UART_Init(void);
 void HandlerBtnClick(void *argument);
 void LedBlinkTask(void *argument);
 void SetUART(void *argument);
@@ -154,7 +154,7 @@ void Get_Btn_Task(void)
 
 void Activate_Get_UART(void)
 {
-	xSemaphoreGiveFromISR(Get_UARTHandle, NULL);
+	xSemaphoreGiveFromISR(Sph_Get_UARTHandle, NULL);
 }
 /* USER CODE END PFP */
 
@@ -193,7 +193,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -215,6 +215,9 @@ int main(void)
   /* creation of Sph_Set_Led */
   Sph_Set_LedHandle = osSemaphoreNew(4, 4, &Sph_Set_Led_attributes);
 
+  /* creation of Sph_Get_UART */
+  Sph_Get_UARTHandle = osSemaphoreNew(4, 4, &Sph_Get_UART_attributes);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
@@ -229,9 +232,6 @@ int main(void)
 
   /* creation of Print_Queue */
   Print_QueueHandle = osMessageQueueNew (4, sizeof(Symbol_TypeDef), &Print_Queue_attributes);
-
-  /* creation of SphQueue_Get_UART */
-  SphQueue_Get_UARTHandle = osMessageQueueNew (4, sizeof(uint8_t), &SphQueue_Get_UART_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -317,7 +317,7 @@ void SystemClock_Config(void)
   * @param None
   * @retval None
   */
-static void MX_USART2_Init(void)
+static void MX_USART2_UART_Init(void)
 {
 
   /* USER CODE BEGIN USART2_Init 0 */
@@ -327,16 +327,15 @@ static void MX_USART2_Init(void)
   /* USER CODE BEGIN USART2_Init 1 */
 
   /* USER CODE END USART2_Init 1 */
-  husart2.Instance = USART2;
-  husart2.Init.BaudRate = 115200;
-  husart2.Init.WordLength = USART_WORDLENGTH_8B;
-  husart2.Init.StopBits = USART_STOPBITS_1;
-  husart2.Init.Parity = USART_PARITY_NONE;
-  husart2.Init.Mode = USART_MODE_TX_RX;
-  husart2.Init.CLKPolarity = USART_POLARITY_LOW;
-  husart2.Init.CLKPhase = USART_PHASE_1EDGE;
-  husart2.Init.CLKLastBit = USART_LASTBIT_DISABLE;
-  if (HAL_USART_Init(&husart2) != HAL_OK)
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 38400;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -581,7 +580,7 @@ void SetUART(void *argument)
 		 */
 		for (uint8_t	Number_Bits = 0; Number_Bits < 7; Number_Bits ++)
 		{
-			switch(Number_Bits)
+			switch(Number_Bits+1)
 			{
 				case FIRST_BIT:
 				{
@@ -618,10 +617,10 @@ void SetUART(void *argument)
 		}
 		Sumbol_Bits[END_BIT] 					=	0;
 		xSemaphoreTake(Guardian_UARTHandle, portMAX_DELAY);
-		HAL_USART_Transmit_IT(&husart2, Sumbol_Bits, 6);
+		HAL_UART_Transmit_IT(&huart2, Sumbol_Bits, 6);
 
 		/*	Ожидание завершения передачи	*/
-		while(HAL_USART_GetState(&husart2) == HAL_USART_STATE_BUSY_TX )
+		while(HAL_UART_GetState(&huart2) == HAL_UART_STATE_BUSY_TX )
 		{
 		}
 
@@ -641,31 +640,31 @@ void SetUART(void *argument)
 void GetUART(void *argument)
 {
   /* USER CODE BEGIN GetUART */
-	uint8_t	*Sumbol_Bits[6];
+	uint8_t	Sumbol_Bits[6];
 	/* Infinite loop */
 
 	/*	Очистка листа семофоров - неправельная конфигурация CMSIS V2 */
-/*	xSemaphoreTake(Get_UARTHandle, portMAX_DELAY);
-	xSemaphoreTake(Get_UARTHandle, portMAX_DELAY);
-	xSemaphoreTake(Get_UARTHandle, portMAX_DELAY);
-	xSemaphoreTake(Get_UARTHandle, portMAX_DELAY);
+	xSemaphoreTake(Sph_Get_UARTHandle, portMAX_DELAY);
+	xSemaphoreTake(Sph_Get_UARTHandle, portMAX_DELAY);
+	xSemaphoreTake(Sph_Get_UARTHandle, portMAX_DELAY);
+	xSemaphoreTake(Sph_Get_UARTHandle, portMAX_DELAY);
 
 	for(;;)
 	{
 		ActivTaskNumbe	=	4;
-		xSemaphoreTake(Get_UARTHandle, portMAX_DELAY);
+		xSemaphoreTake(Sph_Get_UARTHandle, portMAX_DELAY);
 		xSemaphoreTake(Guardian_UARTHandle, portMAX_DELAY);
-		HAL_USART_Receive_IT(&husart2, *Sumbol_Bits, 6);
+		HAL_UART_Receive_IT(&huart2, Sumbol_Bits, 6);
 
 		/*	Ожидание завершения приёма	*/
-/*		while(HAL_USART_GetState(&husart2) == HAL_USART_STATE_BUSY_RX )
+		while(HAL_UART_GetState(&huart2) == HAL_UART_STATE_BUSY_RX )
 		{
 		}
 
 		xSemaphoreGive(Guardian_UARTHandle);
 
 		/*	Динамическая индикация, на основе принятых данных	*/
-/*		for (uint8_t	Number_Bits = 0; Number_Bits < 7; Number_Bits ++)
+		for (uint8_t	Number_Bits = 0; Number_Bits < 7; Number_Bits ++)
 		{
 			if ( (Sumbol_Bits[Number_Bits] - Offset) == Point)
 			{
@@ -681,7 +680,7 @@ void GetUART(void *argument)
 			}
 		}
 
-	}*/
+	}
   /* USER CODE END GetUART */
 }
 
